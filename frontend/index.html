@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Diabetes Risk Checker</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:600px;margin:20px auto}
+    label{display:block;margin-top:10px}
+    input, select{width:100%;padding:8px;margin-top:4px}
+    button{margin-top:12px;padding:10px 16px}
+    #result{margin-top:12px;padding:12px;background:#f0f0f0;border-radius:6px}
+  </style>
+</head>
+<body>
+  <h2>Diabetes Risk Checker</h2>
+  <div>
+    <label>Age <input id="Age" type="number" value="45"></label>
+    <label>BMI <input id="BMI" type="number" step="0.1" value="28.5"></label>
+    <label>GenHlth (1 best - 5 worst)
+      <select id="GenHlth">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </label>
+    <label>HighBP (0 = No, 1 = Yes) <input id="HighBP" type="number" value="0"></label>
+    <label>HighChol (0 = No, 1 = Yes) <input id="HighChol" type="number" value="0"></label>
+    <label>Smoker (0 = No, 1 = Yes) <input id="Smoker" type="number" value="0"></label>
+
+    <button id="predict">Predict</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function predict() {
+      const payload = {
+        Age: Number(document.getElementById('Age').value),
+        BMI: Number(document.getElementById('BMI').value),
+        GenHlth: Number(document.getElementById('GenHlth').value),
+        HighBP: Number(document.getElementById('HighBP').value),
+        HighChol: Number(document.getElementById('HighChol').value),
+        Smoker: Number(document.getElementById('Smoker').value)
+      };
+      document.getElementById('result').textContent = 'Predicting...';
+      try {
+        const res = await fetch('/predict_json', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json();
+        document.getElementById('result').innerHTML = `<b>Prediction:</b> ${j.prediction_label} <small>(${j.prediction_code})</small>`;
+      } catch (e) {
+        document.getElementById('result').textContent = 'Error: ' + e.message;
+      }
+    }
+    document.getElementById('predict').addEventListener('click', predict);
+  </script>
+</body>
+</html>
