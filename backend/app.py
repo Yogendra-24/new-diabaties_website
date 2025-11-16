@@ -1,26 +1,32 @@
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import joblib
 import traceback
 
-# Load simple model (6-feature model)
+# Load simple model
 bundle = joblib.load("model_simple.joblib")
-
 model = bundle["model"]
 scaler = bundle["scaler"]
 FEATURES = bundle["features"]
 
-app = FastAPI()
+app = FastAPI(title="Diabetes Predictor")
 
+# CORS (okay for demo). In prod, restrict origins.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
+# Serve frontend files from backend/frontend
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
+# Input schema
 class Input6(BaseModel):
     Age: float
     BMI: float
@@ -28,10 +34,6 @@ class Input6(BaseModel):
     HighBP: float
     HighChol: float
     Smoker: float
-
-@app.get("/")
-def home():
-    return {"message": "Simple Diabetes Prediction API Running"}
 
 @app.get("/health")
 def health():
@@ -50,7 +52,6 @@ def predict_json(inp: Input6):
         }], columns=FEATURES)
 
         X_scaled = scaler.transform(row)
-
         pred = int(model.predict(X_scaled)[0])
         label_map = {0: "Non-Diabetic", 1: "Pre-Diabetic", 2: "Diabetic"}
 
